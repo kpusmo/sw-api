@@ -1,0 +1,49 @@
+version: '3.5'
+services:
+  database:
+    image: mariadb:10.3
+    ports:
+      - ${DOCKER_DATABASE_PORT}:${TYPEORM_PORT}
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=${TYPEORM_DATABASE}"
+      - "MYSQL_USER=${TYPEORM_USERNAME}"
+      - "MYSQL_PASSWORD=${TYPEORM_PASSWORD}"
+      - "MYSQL_ROOT_PASSWORD=${TYPEORM_PASSWORD}"
+    restart: always
+    networks:
+      - sw-api
+
+  database-tests:
+    image: mariadb:10.3
+    ports:
+      - "${DOCKER_DATABASE_TEST_PORT:-33061}:${TYPEORM_PORT}"
+    volumes:
+      - /var/lib/mysql
+    environment:
+      - "MYSQL_DATABASE=${TYPEORM_TEST_DATABASE}"
+      - "MYSQL_USER=${TYPEORM_TEST_USERNAME}"
+      - "MYSQL_PASSWORD=${TYPEORM_TEST_PASSWORD}"
+      - "MYSQL_ROOT_PASSWORD=${TYPEORM_TEST_PASSWORD}"
+    restart: always
+    networks:
+      - sw-api
+
+  sw-api:
+    build:
+      context: .
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/dist
+    networks:
+      - sw-api
+    ports:
+      - ${DOCKER_API_PORT}:3000
+    command: ["docker/scripts/wait-for-it.sh", "database:3306", "-t", "20", "--", "docker/scripts/startup-dev.sh"]
+    restart: always
+
+networks:
+  sw-api:
