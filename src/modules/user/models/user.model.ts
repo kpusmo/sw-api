@@ -1,4 +1,5 @@
-import {Column, Entity, PrimaryColumn} from 'typeorm';
+import {Column, Entity, OneToMany, PrimaryColumn} from 'typeorm';
+import {UserResource} from './user-resource.model';
 
 @Entity('users')
 export class User {
@@ -8,9 +9,12 @@ export class User {
     @Column()
     email: string;
 
-    @Column()
+    @Column({select: false})
     password: string;
 
     @Column()
     swHeroId: number;
+
+    @OneToMany(type => UserResource, resource => resource.user)
+    resources: UserResource[];
 }
